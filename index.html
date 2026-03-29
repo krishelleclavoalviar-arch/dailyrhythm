@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0c0a14" id="themeColorMeta">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="My Rhythm">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <title>My Daily Rhythm</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --surface: rgba(255,255,255,0.58);
+            --surface-hover: rgba(255,255,255,0.80);
+            --border: rgba(255,255,255,0.75);
+            --text-primary: #1e1a2e;
+            --text-secondary: rgba(30,26,46,0.60);
+            --text-muted: rgba(30,26,46,0.38);
+            --phase-color: #f59e0b;
+            --phase-light: #92400e;
+            --phase-bg: rgba(254,243,199,0.72);
+            --phase-border: rgba(245,158,11,0.35);
+            --bg-gradient: linear-gradient(160deg, #fffbeb 0%, #fef3c7 60%, #fde68a 100%);
+        }
+
+        .p-menstruation {
+            --phase-color: #f43f5e; --phase-light: #9d174d;
+            --phase-bg: rgba(255,228,230,0.72); --phase-border: rgba(244,63,94,0.35);
+            --bg-gradient: linear-gradient(160deg, #fff1f2 0%, #ffe4e6 60%, #fecdd3 100%);
+        }
+        .p-follicular {
+            --phase-color: #22c55e; --phase-light: #065f46;
+            --phase-bg: rgba(220,252,231,0.72); --phase-border: rgba(34,197,94,0.35);
+            --bg-gradient: linear-gradient(160deg, #f0fdf4 0%, #dcfce7 60%, #bbf7d0 100%);
+        }
+        .p-ovulation {
+            --phase-color: #60a5fa; --phase-light: #1e40af;
+            --phase-bg: rgba(219,234,254,0.72); --phase-border: rgba(96,165,250,0.38);
+            --bg-gradient: linear-gradient(160deg, #eff6ff 0%, #dbeafe 60%, #bfdbfe 100%);
+        }
+        .p-luteal {
+            --phase-color: #f59e0b; --phase-light: #92400e;
+            --phase-bg: rgba(254,243,199,0.72); --phase-border: rgba(245,158,11,0.35);
+            --bg-gradient: linear-gradient(160deg, #fffbeb 0%, #fef3c7 60%, #fde68a 100%);
+        }
+
+        html { font-size: 16px; }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh; min-height: 100dvh;
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: max(24px, env(safe-area-inset-top));
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-bottom: max(56px, calc(56px + env(safe-area-inset-bottom)));
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; top: -8%; left: 50%;
+            transform: translateX(-50%);
+            width: 75vw; height: 50vw; max-width: 520px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.55) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .wrapper { width: 100%; max-width: 460px; position: relative; z-index: 1; }
+
+        /* ─── Header ─── */
+        .app-header { text-align: center; padding: 4px 0 20px; }
+        .app-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.05rem; font-weight: 400; font-style: italic;
+            color: var(--text-secondary); letter-spacing: 0.12em;
+        }
+        .app-subtitle {
+            font-size: 0.68rem; color: var(--text-muted);
+            letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px;
+        }
+
+        /* ─── North Star ─── */
+        .north-star {
+            background: rgba(255,255,255,0.68);
+            border: 1px solid rgba(255,255,255,0.88);
+            border-radius: 16px; padding: 14px 18px; margin-bottom: 14px;
+            box-shadow: 0 4px 20px rgba(30,26,46,0.07);
+        }
+        .ns-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .ns-icon { color: var(--phase-color); font-size: 0.85rem; transition: color 0.4s; }
+        .ns-title {
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 0.18em;
+            text-transform: uppercase; color: var(--text-secondary); flex: 1;
+        }
+        .ns-week { font-size: 0.72rem; font-weight: 600; color: var(--phase-light); transition: color 0.4s; }
+        .ns-bar-track {
+            height: 6px; background: rgba(30,26,46,0.08);
+            border-radius: 3px; overflow: hidden; margin-bottom: 8px;
+        }
+        .ns-bar-fill {
+            height: 100%; background: var(--phase-color); border-radius: 3px;
+            transition: width 0.8s ease, background 0.4s;
+        }
+        .ns-footer { display: flex; justify-content: space-between; align-items: center; }
+        .ns-date-label { font-size: 0.63rem; color: var(--text-muted); letter-spacing: 0.05em; }
+        .ns-remaining { font-size: 0.68rem; font-weight: 600; color: var(--phase-light); transition: color 0.4s; }
+
+        /* ─── Period Check ─── */
+        .period-check {
+            background: rgba(255,228,230,0.9);
+            border: 1px solid rgba(244,63,94,0.35);
+            border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+        }
+        .period-check.hidden { display: none; }
+        .period-check-text { font-size: 0.82rem; color: #9d174d; margin-bottom: 12px; line-height: 1.45; }
+        .period-check-btns { display: flex; gap: 8px; }
+        .period-btn {
+            flex: 1; padding: 9px 12px; border-radius: 10px; border: none;
+            font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+        }
+        .period-btn-yes { background: #f43f5e; color: #fff; }
+        .period-btn-yes:active { background: #e11d48; }
+        .period-btn-no { background: rgba(255,255,255,0.7); color: #9d174d; border: 1px solid rgba(244,63,94,0.25); }
+        .period-btn-no:active { background: rgba(255,255,255,0.9); }
+
+        /* ─── Countdown Banner ─── */
+        .countdown-banner {
+            background: var(--phase-bg); border: 1px solid var(--phase-border);
+            border-radius: 12px; padding: 10px 16px; font-size: 0.78rem;
+            color: var(--phase-light); text-align: center; margin-bottom: 16px;
+            letter-spacing: 0.03em; transition: all 0.4s;
+        }
+        .countdown-banner.hidden { display: none; }
+
+        /* ─── Progress Dots ─── */
+        .progress-row {
+            display: flex; gap: 5px; justify-content: center;
+            flex-wrap: wrap; margin-bottom: 22px; padding: 0 4px;
+        }
+        .prog-dot { height: 5px; border-radius: 3px; cursor: pointer; transition: all 0.3s ease; flex-shrink: 0; }
+        .prog-dot.dot-past   { width: 5px;  background: rgba(30,26,46,0.22); }
+        .prog-dot.dot-future { width: 5px;  background: rgba(30,26,46,0.10); }
+        .prog-dot.dot-active { width: 20px; background: var(--phase-color); }
+
+        /* ─── Day Card ─── */
+        .day-card { transition: opacity 0.25s ease, transform 0.25s ease; }
+        .day-card.fading { opacity: 0; transform: translateY(10px); }
+
+        /* ─── Date Navigation ─── */
+        .date-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; margin-bottom: 18px;
+        }
+        .nav-btn {
+            width: 40px; height: 40px; border: 1px solid var(--border);
+            background: var(--surface); border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary); font-size: 1rem; transition: all 0.2s;
+            flex-shrink: 0; -webkit-tap-highlight-color: transparent;
+        }
+        .nav-btn:hover:not(:disabled), .nav-btn:active:not(:disabled) {
+            background: var(--surface-hover); border-color: var(--phase-border); color: var(--phase-light);
+        }
+        .nav-btn:disabled { opacity: 0.22; cursor: default; }
+        .date-info { text-align: center; flex: 1; }
+        .date-main { font-size: 1rem; font-weight: 500; color: var(--text-primary); }
+        .date-tag {
+            display: inline-block; margin-top: 4px; font-size: 0.68rem; font-weight: 600;
+            letter-spacing: 0.14em; text-transform: uppercase; color: var(--phase-light);
+        }
+
+        /* ─── Phase Badge ─── */
+        .phase-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--phase-bg); border: 1px solid var(--phase-border);
+            border-radius: 100px; padding: 6px 16px; font-size: 0.72rem;
+            font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--phase-light); margin-bottom: 20px; transition: all 0.4s;
+        }
+
+        /* ─── Quote Card ─── */
+        .quote-card {
+            background: rgba(255,255,255,0.68); border: 1px solid rgba(255,255,255,0.88);
+            border-radius: 20px; padding: 28px 26px 24px; margin-bottom: 22px;
+            position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(30,26,46,0.07);
+        }
+        .quote-card::before {
+            content: '\201C'; position: absolute; top: -14px; left: 12px;
+            font-family: 'Playfair Display', Georgia, serif; font-size: 8rem;
+            color: var(--phase-color); opacity: 0.13; line-height: 1;
+            pointer-events: none; transition: color 0.4s;
+        }
+        .quote-text {
+            font-family: 'Playfair Display', Georgia, serif; font-style: italic;
+            font-size: clamp(1.15rem, 4.5vw, 1.45rem); line-height: 1.6;
+            color: var(--text-primary); position: relative; z-index: 1;
+        }
+
+        /* ─── All Done ─── */
+        .all-done {
+            display: none; align-items: center; gap: 8px;
+            background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.38);
+            border-radius: 12px; padding: 10px 14px; font-size: 0.8rem;
+            color: #065f46; margin-bottom: 14px; font-weight: 500;
+        }
+        .all-done.show { display: flex; }
+
+        /* ─── Tasks ─── */
+        .tasks-label {
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em;
+            text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;
+        }
+        .task-list { display: flex; flex-direction: column; gap: 8px; }
+        .task-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 13px 14px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 13px; cursor: pointer; transition: background 0.18s, opacity 0.2s;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .task-item:active { background: var(--surface-hover); transform: scale(0.985); }
+        .task-item.done { opacity: 0.38; }
+        .task-circle {
+            width: 21px; height: 21px; border: 1.5px solid var(--phase-border);
+            border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .task-item.done .task-circle { background: var(--phase-color); border-color: var(--phase-color); }
+        .task-check-mark { color: #fff; font-size: 0.62rem; font-weight: 700; opacity: 0; transition: opacity 0.15s; }
+        .task-item.done .task-check-mark { opacity: 1; }
+        .task-text { font-size: 0.88rem; line-height: 1.45; color: var(--text-primary); }
+        .task-item.done .task-text { text-decoration: line-through; color: var(--text-muted); }
+
+        /* ─── Today Button ─── */
+        .today-btn {
+            display: block; width: 100%; margin-top: 20px; padding: 13px;
+            background: transparent; border: 1px solid var(--border); border-radius: 13px;
+            color: var(--text-muted); font-family: 'Inter', system-ui, sans-serif;
+            font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em;
+            text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .today-btn:active { border-color: var(--phase-border); color: var(--phase-light); background: var(--phase-bg); }
+        .today-btn.hidden { display: none; }
+
+        .key-hint { text-align: center; font-size: 0.65rem; color: var(--text-muted); margin-top: 16px; letter-spacing: 0.08em; }
+
+        /* ─── iOS Install Banner ─── */
+        .ios-banner {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+            background: rgba(255,255,255,0.93); border-top: 1px solid rgba(30,26,46,0.1);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            padding: 14px 18px; padding-bottom: max(14px, env(safe-area-inset-bottom));
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .ios-banner.hidden { display: none; }
+        .ios-banner-text { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; }
+        .ios-banner-text strong { color: var(--text-primary); }
+        .ios-banner-icon { font-size: 1.3rem; flex-shrink: 0; }
+        .ios-close {
+            background: none; border: none; color: var(--text-muted); font-size: 1rem;
+            cursor: pointer; padding: 4px 6px; flex-shrink: 0; -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 390px) {
+            .quote-card { padding: 22px 18px 20px; }
+            .quote-text { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body class="p-luteal">
+
+<div class="ios-banner hidden" id="iosBanner">
+    <span class="ios-banner-icon">🌙</span>
+    <p class="ios-banner-text">Install as app: tap <strong>⬆</strong> then <strong>Add to Home Screen</strong></p>
+    <button class="ios-close" id="iosBannerClose" aria-label="Dismiss">✕</button>
+</div>
+
+<div class="wrapper">
+    <header class="app-header">
+        <div class="app-title">My Daily Rhythm</div>
+        <div class="app-subtitle">Your personal wellness compass</div>
+    </header>
+
+    <!-- North Star Progress -->
+    <div class="north-star">
+        <div class="ns-header">
+            <span class="ns-icon">✦</span>
+            <span class="ns-title">North Star</span>
+            <span class="ns-week" id="nsWeek">Week — of 52</span>
+        </div>
+        <div class="ns-bar-track">
+            <div class="ns-bar-fill" id="nsBarFill" style="width:0%"></div>
+        </div>
+        <div class="ns-footer">
+            <span class="ns-date-label">Dec 9, 2025</span>
+            <span class="ns-remaining" id="nsRemaining">— weeks to go</span>
+            <span class="ns-date-label">Dec 9, 2026</span>
+        </div>
+    </div>
+
+    <!-- Period Check Banner -->
+    <div class="period-check hidden" id="periodCheck">
+        <p class="period-check-text">🔴 Your period is expected around now — has it arrived?</p>
+        <div class="period-check-btns">
+            <button class="period-btn period-btn-yes" id="periodYes">Yes, it started today</button>
+            <button class="period-btn period-btn-no" id="periodNo">Not yet</button>
+        </div>
+    </div>
+
+    <!-- Countdown (shown before cycle starts) -->
+    <div class="countdown-banner hidden" id="countdownBanner"></div>
+
+    <!-- Progress dots -->
+    <div class="progress-row" id="progressRow"></div>
+
+    <!-- Day card -->
+    <div class="day-card" id="dayCard">
+        <div class="date-nav">
+            <button class="nav-btn" id="prevBtn" aria-label="Previous day">&#8592;</button>
+            <div class="date-info">
+                <div class="date-main" id="dateMain"></div>
+                <span class="date-tag" id="dateTag"></span>
+            </div>
+            <button class="nav-btn" id="nextBtn" aria-label="Next day">&#8594;</button>
+        </div>
+
+        <div class="phase-badge" id="phaseBadge"></div>
+
+        <div class="quote-card">
+            <p class="quote-text" id="quoteText"></p>
+        </div>
+
+        <div class="all-done" id="allDoneMsg">
+            <span>✨</span> All intentions complete — well done!
+        </div>
+
+        <div>
+            <div class="tasks-label" id="tasksLabel">Today's Intentions</div>
+            <div class="task-list" id="taskList"></div>
+        </div>
+    </div>
+
+    <button class="today-btn hidden" id="todayBtn">↺ &nbsp;Jump to Today</button>
+    <div class="key-hint" id="keyHint">← → arrow keys to navigate days</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════ */
+const NS_START_DATE  = '2025-12-09';
+const NS_END_DATE    = '2026-12-09';
+const APP_START_DATE = '2026-03-22';
+const CYCLE_LENGTH   = 28;
+
+const PHASE_DURATIONS = { menstruation: 4, follicular: 7, ovulation: 5, luteal: 12 };
+const PHASE_EMOJI     = { menstruation: '🔴', follicular: '🟢', ovulation: '🔵', luteal: '🟡' };
+const PHASE_ORDER     = ['menstruation', 'follicular', 'ovulation', 'luteal'];
+
+const DAILY_TASKS = [
+    "Breakfast",
+    "Coffee",
+    "Shower",
+    "Brush teeth",
+    "Lunch",
+    "Iron supplement",
+    "AI Training",
+    "Workout / Jog",
+    "Leave phone in cabinet",
+    "Wash up",
+    "Wind-down / Read",
+    "Magnesium before bed"
+];
+
+const PHASE_QUOTES = {
+    menstruation: [
+        "Rest is productive. Reset is powerful.",
+        "I release pressure and keep only what matters.",
+        "I listen to my body without judgment.",
+        "I am almost through — I honor today.",
+        "My body knows what it's doing. I trust it.",
+        "Softness is not weakness.",
+        "I give myself full permission to rest.",
+        "Stillness has its own power.",
+        "I release what no longer serves me.",
+        "Every month I begin again.",
+        "I honor the wisdom in my body.",
+        "Resting is part of the work."
+    ],
+    follicular: [
+        "I begin again without carrying yesterday's weight.",
+        "Small actions create powerful momentum.",
+        "I take action before I feel ready.",
+        "I build consistency, not perfection.",
+        "I am becoming more capable every day.",
+        "I trust the process I'm building.",
+        "I show up again, and that's what matters.",
+        "New energy, new possibilities.",
+        "I plant seeds today that I'll harvest later.",
+        "My focus sharpens with every step.",
+        "I rise and begin.",
+        "Each day I grow stronger and clearer.",
+        "I welcome this fresh start.",
+        "I am in bloom."
+    ],
+    ovulation: [
+        "I express myself clearly and confidently.",
+        "I am ready to be seen and to try.",
+        "I don't shrink — I execute.",
+        "My energy creates opportunities.",
+        "I take action and make things real.",
+        "I am at my peak — I use it.",
+        "I communicate, connect, and create.",
+        "My confidence is earned and real.",
+        "I show up fully.",
+        "This is my moment to act."
+    ],
+    luteal: [
+        "I stay consistent even when motivation drops.",
+        "I do what matters, even if imperfect.",
+        "I don't follow every negative thought.",
+        "I simplify instead of overwhelm.",
+        "I protect my energy and my focus.",
+        "I keep promises to myself.",
+        "I finish small things, and they add up.",
+        "I am stronger than temporary feelings.",
+        "I slow down, but I don't stop.",
+        "Hard days still count.",
+        "I choose discipline over mood.",
+        "I've come further than I think.",
+        "Even rest is productive.",
+        "I am not my mood.",
+        "I keep going, quietly and surely."
+    ]
+};
+
+// Quotes for the days before the first confirmed period
+const PRE_PERIOD_QUOTES = [
+    "I give myself grace while I wait.",
+    "Patience with myself is a strength.",
+    "I honor where I am right now.",
+    "I don't need to feel good to follow through."
+];
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+function localDateStr(d = new Date()) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function addDays(date, n) {
+    const d = new Date(date.getTime ? date.getTime() : date);
+    d.setDate(d.getDate() + n);
+    return d;
+}
+function daysBetween(a, b) {
+    return Math.round((b - a) / 86400000);
+}
+
+const taskKey    = (date, i) => `rhythm_${date}_${i}`;
+const isTaskDone = (date, i) => localStorage.getItem(taskKey(date, i)) === '1';
+function toggleTask(date, i) {
+    const k = taskKey(date, i);
+    localStorage.getItem(k) === '1' ? localStorage.removeItem(k) : localStorage.setItem(k, '1');
+}
+function allDone(date) {
+    for (let i = 0; i < DAILY_TASKS.length; i++) if (!isTaskDone(date, i)) return false;
+    return true;
+}
+
+const THEME_COLORS = { menstruation:'#fecdd3', follicular:'#bbf7d0', ovulation:'#bfdbfe', luteal:'#fde68a' };
+function setThemeColor(phase) {
+    document.getElementById('themeColorMeta').content = THEME_COLORS[phase] || '#0c0a14';
+}
+
+/* ═══════════════════════════════════════════════
+   PERIOD TRACKING
+═══════════════════════════════════════════════ */
+const PERIODS_KEY   = 'rhythm_confirmed_periods';
+const DISMISSED_KEY = 'rhythm_prompt_dismissed';
+
+function getConfirmedPeriods() {
+    try {
+        const s = localStorage.getItem(PERIODS_KEY);
+        const arr = s ? JSON.parse(s) : [];
+        return arr.length ? arr : ['2026-03-26'];
+    } catch { return ['2026-03-26']; }
+}
+
+function confirmPeriod(dateStr) {
+    const periods = getConfirmedPeriods();
+    if (!periods.includes(dateStr)) {
+        periods.push(dateStr);
+        periods.sort();
+        localStorage.setItem(PERIODS_KEY, JSON.stringify(periods));
+    }
+    localStorage.removeItem(DISMISSED_KEY);
+    DAYS = buildSchedule();
+    idx  = DAYS.findIndex(d => d.date === TODAY);
+    if (idx === -1) idx = DAYS.length - 1;
+    document.getElementById('periodCheck').classList.add('hidden');
+    render(idx);
+}
+
+function shouldShowPeriodPrompt() {
+    const periods  = getConfirmedPeriods();
+    const last     = periods[periods.length - 1];
+    const expected = addDays(new Date(last + 'T12:00:00'), CYCLE_LENGTH);
+    const today    = new Date(TODAY + 'T12:00:00');
+
+    if (today < expected) return false;
+    if (daysBetween(expected, today) > 14) return false;
+
+    const alreadyConfirmed = periods.some(p => {
+        const pd = new Date(p + 'T12:00:00');
+        return pd >= expected && daysBetween(expected, pd) <= 14;
+    });
+    if (alreadyConfirmed) return false;
+
+    return localStorage.getItem(DISMISSED_KEY) !== TODAY;
+}
+
+/* ═══════════════════════════════════════════════
+   SCHEDULE BUILDER
+═══════════════════════════════════════════════ */
+function buildSchedule() {
+    const periods     = getConfirmedPeriods();
+    const firstPeriod = new Date(periods[0] + 'T12:00:00');
+    const appStart    = new Date(APP_START_DATE + 'T12:00:00');
+    const endDate     = new Date(NS_END_DATE + 'T12:00:00');
+    const schedule    = [];
+
+    // Pre-period luteal (APP_START → day before first period)
+    let cur = new Date(appStart);
+    let preIdx = 0;
+    while (cur < firstPeriod) {
+        const isLast = daysBetween(cur, firstPeriod) === 1;
+        schedule.push({
+            date:  localDateStr(cur),
+            phase: 'luteal', emoji: '🟡',
+            label: isLast ? 'Luteal — Final Day' : 'Luteal',
+            quote: PRE_PERIOD_QUOTES[preIdx % PRE_PERIOD_QUOTES.length]
+        });
+        preIdx++;
+        cur = addDays(cur, 1);
+    }
+
+    // Build list of all cycle starts: confirmed + predicted
+    const allStarts = periods.map(p => new Date(p + 'T12:00:00'));
+    allStarts.sort((a, b) => a - b);
+    let lastStart = allStarts[allStarts.length - 1];
+    while (true) {
+        const next = addDays(lastStart, CYCLE_LENGTH);
+        if (next > endDate) break;
+        const covered = allStarts.some(s => Math.abs(daysBetween(s, next)) < 7);
+        if (!covered) allStarts.push(new Date(next));
+        lastStart = next;
+    }
+    allStarts.sort((a, b) => a - b);
+
+    // Generate each cycle
+    const qc = { menstruation: 0, follicular: 0, ovulation: 0, luteal: 0 };
+
+    for (let ci = 0; ci < allStarts.length; ci++) {
+        cur = new Date(allStarts[ci]);
+        const nextStart = ci + 1 < allStarts.length ? allStarts[ci + 1] : null;
+
+        for (const phaseName of PHASE_ORDER) {
+            let duration = PHASE_DURATIONS[phaseName];
+
+            // If we know when next period starts, adjust luteal to fit
+            if (phaseName === 'luteal' && nextStart) {
+                let phaseStart = new Date(allStarts[ci]);
+                for (const p of PHASE_ORDER.slice(0, -1)) phaseStart = addDays(phaseStart, PHASE_DURATIONS[p]);
+                const actual = daysBetween(phaseStart, nextStart);
+                if (actual > 0 && actual <= 20) duration = actual;
+            }
+
+            const quotes = PHASE_QUOTES[phaseName];
+            for (let d = 0; d < duration; d++) {
+                if (cur > endDate) break;
+                const isLast = (d === duration - 1);
+                let label;
+                if (phaseName === 'menstruation') {
+                    label = `Menstruation — Day ${d + 1}`;
+                } else if (phaseName === 'luteal' && isLast) {
+                    label = 'Luteal — Final Day';
+                } else {
+                    label = phaseName.charAt(0).toUpperCase() + phaseName.slice(1);
+                }
+                schedule.push({
+                    date:  localDateStr(cur),
+                    phase: phaseName,
+                    emoji: PHASE_EMOJI[phaseName],
+                    label,
+                    quote: quotes[qc[phaseName] % quotes.length]
+                });
+                qc[phaseName]++;
+                cur = addDays(cur, 1);
+            }
+            if (cur > endDate) break;
+        }
+    }
+
+    return schedule;
+}
+
+/* ═══════════════════════════════════════════════
+   NORTH STAR
+═══════════════════════════════════════════════ */
+function renderNorthStar() {
+    const nsStart    = new Date(NS_START_DATE + 'T12:00:00');
+    const nsEnd      = new Date(NS_END_DATE   + 'T12:00:00');
+    const now        = new Date();
+    const totalMs    = nsEnd - nsStart;
+    const elapsed    = Math.max(0, now - nsStart);
+    const weekNum    = Math.floor(elapsed / (7 * 86400000)) + 1;
+    const totalWeeks = Math.ceil(totalMs / (7 * 86400000));
+    const weeksLeft  = Math.max(0, Math.ceil((nsEnd - now) / (7 * 86400000)));
+    const pct        = Math.min(100, (elapsed / totalMs) * 100);
+
+    document.getElementById('nsBarFill').style.width  = pct + '%';
+    document.getElementById('nsWeek').textContent      = `Week ${weekNum} of ${totalWeeks}`;
+    document.getElementById('nsRemaining').textContent = `${weeksLeft} weeks to go`;
+}
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+const TODAY = localDateStr();
+let DAYS = buildSchedule();
+let idx  = DAYS.findIndex(d => d.date === TODAY);
+if (idx === -1) idx = TODAY < DAYS[0].date ? 0 : DAYS.length - 1;
+
+/* ═══════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════ */
+const phaseLight = { menstruation:'#f43f5e', follicular:'#22c55e', ovulation:'#60a5fa', luteal:'#f59e0b' };
+
+function render(i) {
+    const card = document.getElementById('dayCard');
+    card.classList.add('fading');
+
+    setTimeout(() => {
+        const day     = DAYS[i];
+        const isToday = day.date === TODAY;
+
+        document.body.className = 'p-' + day.phase;
+        setThemeColor(day.phase);
+        renderNorthStar();
+
+        const d = new Date(day.date + 'T12:00:00');
+        document.getElementById('dateMain').textContent = d.toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric'
+        });
+        document.getElementById('dateTag').textContent = isToday ? '✦ Today' : '';
+
+        document.getElementById('phaseBadge').textContent = day.emoji + '  ' + day.label;
+        document.getElementById('quoteText').textContent  = '\u201C' + day.quote + '\u201D';
+        document.getElementById('allDoneMsg').classList.toggle('show', allDone(day.date));
+        document.getElementById('tasksLabel').textContent = isToday ? "Today's Intentions" : "Intentions";
+
+        const list = document.getElementById('taskList');
+        list.innerHTML = '';
+        DAILY_TASKS.forEach((text, ti) => {
+            const done = isTaskDone(day.date, ti);
+            const item = document.createElement('div');
+            item.className = 'task-item' + (done ? ' done' : '');
+
+            const circle = document.createElement('div');
+            circle.className = 'task-circle';
+            const mark = document.createElement('span');
+            mark.className = 'task-check-mark';
+            mark.textContent = '✓';
+            circle.appendChild(mark);
+
+            const label = document.createElement('span');
+            label.className = 'task-text';
+            label.textContent = text;
+
+            item.appendChild(circle);
+            item.appendChild(label);
+            item.addEventListener('click', () => {
+                toggleTask(day.date, ti);
+                item.classList.toggle('done');
+                document.getElementById('allDoneMsg').classList.toggle('show', allDone(day.date));
+            });
+            list.appendChild(item);
+        });
+
+        document.getElementById('prevBtn').disabled = (i === 0);
+        document.getElementById('nextBtn').disabled = (i === DAYS.length - 1);
+
+        const todayInRange = DAYS.some(d2 => d2.date === TODAY);
+        document.getElementById('todayBtn').classList.toggle('hidden', !todayInRange || isToday);
+
+        const banner = document.getElementById('countdownBanner');
+        if (TODAY < DAYS[0].date && i === 0) {
+            const diff = Math.round((new Date(DAYS[0].date + 'T12:00:00') - new Date()) / 86400000);
+            const startLabel = new Date(DAYS[0].date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+            banner.textContent = `✦ Your cycle plan begins in ${diff} day${diff !== 1 ? 's' : ''} — ${startLabel}`;
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+
+        const row = document.getElementById('progressRow');
+        row.innerHTML = '';
+        DAYS.forEach((day2, j) => {
+            const dot = document.createElement('div');
+            dot.className = 'prog-dot ' + (j < i ? 'dot-past' : j === i ? 'dot-active' : 'dot-future');
+            if (j === i) dot.style.background = phaseLight[day2.phase];
+            dot.title = day2.date + ' · ' + day2.label;
+            dot.addEventListener('click', () => { if (j !== idx) { idx = j; render(idx); } });
+            row.appendChild(dot);
+        });
+
+        card.classList.remove('fading');
+    }, 220);
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+document.getElementById('prevBtn').addEventListener('click', () => { if (idx > 0) { idx--; render(idx); } });
+document.getElementById('nextBtn').addEventListener('click', () => { if (idx < DAYS.length - 1) { idx++; render(idx); } });
+document.getElementById('todayBtn').addEventListener('click', () => {
+    const ti = DAYS.findIndex(d => d.date === TODAY);
+    if (ti !== -1) { idx = ti; render(idx); }
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft'  && idx > 0)               { idx--; render(idx); }
+    if (e.key === 'ArrowRight' && idx < DAYS.length - 1) { idx++; render(idx); }
+});
+
+let touchX = 0;
+document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', e => {
+    const diff = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+        if (diff > 0 && idx < DAYS.length - 1) { idx++; render(idx); }
+        if (diff < 0 && idx > 0)               { idx--; render(idx); }
+    }
+}, { passive: true });
+
+/* ─── Period check ─── */
+document.getElementById('periodYes').addEventListener('click', () => confirmPeriod(TODAY));
+document.getElementById('periodNo').addEventListener('click', () => {
+    localStorage.setItem(DISMISSED_KEY, TODAY);
+    document.getElementById('periodCheck').classList.add('hidden');
+});
+
+/* ═══════════════════════════════════════════════
+   iOS INSTALL BANNER
+═══════════════════════════════════════════════ */
+(function () {
+    const isIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    const dismissed    = localStorage.getItem('rhythm_banner') === '1';
+    if (isIOS && !isStandalone && !dismissed) {
+        document.getElementById('iosBanner').classList.remove('hidden');
+        document.getElementById('iosBannerClose').addEventListener('click', () => {
+            document.getElementById('iosBanner').classList.add('hidden');
+            localStorage.setItem('rhythm_banner', '1');
+        });
+    }
+})();
+
+if ('ontouchstart' in window) document.getElementById('keyHint').style.display = 'none';
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed:', err));
+    });
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+if (shouldShowPeriodPrompt()) document.getElementById('periodCheck').classList.remove('hidden');
+render(idx);
+</script>
+</body>
+</html>

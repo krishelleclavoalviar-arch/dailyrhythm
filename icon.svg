@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bgG" cx="50%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#231d45"/>
+      <stop offset="100%" stop-color="#0c0a14"/>
+    </radialGradient>
+    <linearGradient id="moonG" x1="15%" y1="10%" x2="85%" y2="90%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="55%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <!-- Mask cuts the crescent shape -->
+    <mask id="cMask">
+      <rect width="512" height="512" fill="white"/>
+      <circle cx="308" cy="212" r="132" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="90" fill="url(#bgG)"/>
+
+  <!-- Subtle outer phase ring -->
+  <circle cx="256" cy="256" r="212" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1.5"/>
+
+  <!-- Four phase dots at compass positions -->
+  <!-- Luteal  (top)    → amber -->
+  <circle cx="256" cy="44"  r="10" fill="#fbbf24" opacity="0.55"/>
+  <!-- Follicular (right) → green -->
+  <circle cx="468" cy="256" r="10" fill="#4ade80" opacity="0.55"/>
+  <!-- Menstruation (bottom) → rose -->
+  <circle cx="256" cy="468" r="10" fill="#fb7185" opacity="0.55"/>
+  <!-- Ovulation (left) → blue -->
+  <circle cx="44"  cy="256" r="10" fill="#93c5fd" opacity="0.55"/>
+
+  <!-- Crescent moon -->
+  <circle cx="238" cy="260" r="152" fill="url(#moonG)" mask="url(#cMask)"/>
+
+  <!-- Sparkle stars near the crescent's open side -->
+  <circle cx="384" cy="152" r="7"  fill="#fde68a" opacity="0.90"/>
+  <circle cx="358" cy="105" r="4"  fill="#fde68a" opacity="0.60"/>
+  <circle cx="422" cy="195" r="3"  fill="#fde68a" opacity="0.50"/>
+</svg>
